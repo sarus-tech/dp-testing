@@ -17,12 +17,11 @@ DELTA = 1e-4
 COUNT_THRESHOLD = 5
 RUNS = 100
 NBINS = 20
-# QUERY = "SELECT store_id, SUM(spent) FROM transactions GROUP BY store_id"
 QUERY = "SELECT store_id, SUM(spent) FROM transactions GROUP BY store_id"
 
-# print("Generating datasets")
-# generate_D_0_dataset()
-# generate_adj_datasets(D_1, user_id=0)
+print("Generating datasets")
+generate_D_0_dataset()
+generate_adj_datasets(D_1, user_id=0)
 
 
 print("Generating DP results")

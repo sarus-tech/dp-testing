@@ -1,5 +1,5 @@
 from sqlalchemy import Column, ForeignKey, MetaData, Table, create_engine, types, text
-from datetime import datetime, timedelta
+from datetime import datetime
 import pandas as pd
 import numpy as np
 import typing as t
@@ -117,16 +117,11 @@ def create_transactions(
     assert max_contributions >= N_STORES
 
     spent = np.random.uniform(5, 500, n_transactions)
-    base_datetime = datetime(2024, 10, 15, 18, 41, 26, 332789)
 
     transactions_df = pd.DataFrame(
         {
             "id": np.arange(n_transactions),
             "spent": spent,
-            # "datetime": [
-            #     base_datetime - timedelta(days=np.random.randint(0, 365))
-            #     for _ in range(n_transactions)
-            # ],
         }
     )
 
@@ -216,10 +211,6 @@ def generate_adj_datasets(new_schema: str, user_id: int):
             conn.execute(new_trans_table.insert().values(**row._mapping))
 
 
-def main():
+if __name__ == "__main__":
     generate_D_0_dataset()
     generate_adj_datasets(D_1, user_id=0)
-
-
-if __name__ == "__main__":
-    main()
