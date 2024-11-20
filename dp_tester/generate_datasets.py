@@ -1,5 +1,4 @@
 from sqlalchemy import Column, ForeignKey, MetaData, Table, create_engine, types, text
-from datetime import datetime
 import pandas as pd
 import numpy as np
 import typing as t
