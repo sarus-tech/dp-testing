@@ -1,0 +1,34 @@
+[project]
+name = "dp_tester"
+version = "0.1.0"
+description = "A simple Python project for black box Differencial Privacy testing."
+authors = [
+    { name = "Nicolas Grislain", email = "ng@sarus.tech" },
+    { name = "Andi Cuko", email = "ac@sarus.tech" }
+]
+keywords = ["differential privacy", "Neyman–Pearson", "Data privacy", "Statistical hypothesis testing"]
+
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "numpy >= 1.24",
+    "tqdm",
+]
+
+[project.optional-dependencies]
+
+datasets = [
+    "SQLAlchemy ~= 2.0",
+    "pandas >= 1.4"
+]
+
+pyqrlew_dp_rewriter = [
+	"pyqrlew >= 0.9.25",
+]
+
+dev = [
+    "mypy ~= 1.0",
+    "ruff",
+    "tqdm-stubs",
+    "pandas-stubs",
+]
