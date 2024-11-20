@@ -14,8 +14,9 @@ def generate_dp_results(
     d_0: str,
     adjacent_ds: t.Sequence[str],
 ) -> OverallResults:
-    """It executes the DP query many times and runs it to the D_0
-    and to the adjacent datasets.
+    """It executes the DP query many times to the D_0
+    and to all the adjacent datasets. It returns a dictionary with `run` results
+    for each dataset.
     """
     dp_query = dp_rewriter.rewrite_with_differential_privacy(
         non_dp_query, epsilon, delta

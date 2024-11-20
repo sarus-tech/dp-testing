@@ -10,7 +10,11 @@ class QuantityOverGroups:
     """Experiment to partition results from queries like.
     SELECT <some_group>, <some_quantity> FROM transactions [JOIN users] GROUP BY some_group
 
-    Each partition will have
+    The final partitions will look like:
+    dataset-group: [some_quantity, ...]
+
+    all possible groups should be considered, e.g. all possible store_id if
+    grouping by store_id.
     """
 
     def __init__(self, groups=t.List[t.Any]):
@@ -22,6 +26,7 @@ class QuantityOverGroups:
 
         for ds_name, runs in results.items():
             runs_res: PartitionedResults = {group: [] for group in self.groups}
+            # TODO: improve the readability
             for run_results in runs:
                 res_as_dict = dict(run_results)
 
@@ -30,17 +35,12 @@ class QuantityOverGroups:
 
             for group, partition_results in runs_res.items():
                 res[f"{ds_name}-{group}"] = partition_results
-
         return res
 
-    # TODO: improve code readability of partition_results.
-    # def partition_runs(self, run_results: QueryResults):
 
     def generate_buckets(self, partitioned_results: PartitionedResults, nbuckets: int):
-        """concatenate all values from all the partitioned results and use
-        numpy.histogram to generate the bin edges.
-
-        It returns a list with tuples (lower_edge, higher_edge)
+        """Generate bins by concatenating all values from all the partitioned results and
+        use numpy.histogram to generate the bin edges.
         """
         X = []
         for _, res in partitioned_results.items():
@@ -52,7 +52,11 @@ class QuantityOverGroups:
         self.buckets = list(zip(bin_edges[:-1], bin_edges[1:])) + [None]
 
     def bucket_id(self, data_point: t.Union[float, None]) -> int:
+        """Function used by `partition_results_to_bucket_ids` for getting
+        bucket ids from a given data point."""
+        
         assert self.buckets is not None, "Buckets are not defined"
+        
         if data_point is None:
             return len(self.buckets) - 1
         for i, bucket_value in enumerate(self.buckets[:-1]):
