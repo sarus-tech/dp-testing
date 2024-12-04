@@ -11,7 +11,7 @@ QueryResults = t.Sequence[Row]
 OverallResults = t.Mapping[str, t.Sequence[QueryResults]]
 
 T = t.TypeVar("T")
-BucketIdFromData = Callable[[T], int]
+BucketIdFromData = Callable[[T], t.Sequence[int]]
 PartitionedResults = t.Mapping[str, t.Sequence[T]]
 
 
@@ -54,8 +54,6 @@ class TableRenamer(t.Protocol):
 
 class Partitioner(t.Protocol):
     """A protocol that defines methods for partitioning results and assigning data points to buckets."""
-
-    # def partition_results(self, results: OverallResults) -> PartitionedResults: ...
 
     def generate_buckets(
         self, partitioned_results: PartitionedResults, nbuckets: int

@@ -14,41 +14,48 @@ QuantityOverGroupsGroupType = t.Union[
     datetime.datetime,
     datetime.timedelta,
 ]
-QuantityOverGroupsQuantityType = t.List[t.Union[int, float]]
+QuantityOverGroupsQuantityType = t.Union[int, float]
 Row = t.Tuple[QuantityOverGroupsGroupType, QuantityOverGroupsQuantityType]
 QueryResults = t.Sequence[Row]
 
 
 class QuantityOverGroups:
     """Experiment to partition results from queries like.
-    SELECT <some_group>, <some_quantity> FROM transactions [JOIN users] GROUP BY some_group
+    SELECT <some_group>, AGG(<some_quantity>) FROM transactions [JOIN users] GROUP BY some_group
 
-    The final partitions will look like:
-    dataset-group: [some_quantity, ...]
-
-    all possible groups should be considered, e.g. all possible store_id if
-    grouping by store_id.
+    The output space S is partitioned as all possible pairs group_id and quantity interval
+    plus the empty set.
     """
 
     def __init__(self, groups=t.List[QuantityOverGroupsGroupType]):
         self.groups = groups
         self.buckets: t.List[
-            t.Union[t.Tuple[QuantityOverGroupsGroupType, t.Tuple[float, float]]]
+            t.Optional[t.Union[t.Tuple[QuantityOverGroupsGroupType, t.Tuple[float, float]]]]
         ]
 
     def generate_buckets(self, results: OverallResults, n_float_buckets: int):
         """It generates len(self.groups) * n_float_buckets buckets + 1:
         Each bucket is related to a specific (group, (x_min, x_max) )
         the + 1 is needed to indicate that there are no results.
+
+         example of buckets 
+        [
+            (0, (0., 5.)),
+            (0, (5., 10.)),
+            (1, (0., 5.)),
+            (1, (5., 10.)),
+            ...
+            None,
+        ]
         """
         X: t.List[t.List[float]] = []
         for _, res in results.items():
             for query_res in res:
-                quantity = [float(r[-1]) for r in query_res]
+                quantity = [t.cast(float, r[-1]) for r in query_res]
                 X.append(quantity)
-        X = np.concatenate(X, dtype="float")
+        concatenated = np.concatenate(X, dtype="float")
         _, bin_edges = np.histogram(
-            X, bins=n_float_buckets, range=(np.min(X), np.max(X) + 1)
+            concatenated, bins=n_float_buckets, range=(np.min(concatenated), np.max(concatenated) + 1)
         )
         float_buckets = list(zip(bin_edges[:-1], bin_edges[1:]))
         groups = [group for group in self.groups for _ in range(len(float_buckets))]
@@ -62,18 +69,20 @@ class QuantityOverGroups:
         no_group_present_idx = len(self.buckets) - 1
 
         if len(query_results) == 0:
-            return [no_group_present_idx]
+            return [no_group_present_idx] * len(self.buckets)
 
         query_results_as_dict = dict(query_results)
         groups_in_result = query_results_as_dict.keys()
         bucket_indexes = []
 
-        for index, bucket in enumerate(self.buckets[:-1]):
+        buckets_without_empty = filter(None, self.buckets)
+        for index, bucket in enumerate(buckets_without_empty):
             group_id, (min_value, max_value) = bucket
             if group_id not in groups_in_result:
                 bucket_indexes.append(no_group_present_idx)
             else:
                 quantity = query_results_as_dict.get(group_id)
+                assert quantity is not None
                 if max_value > quantity >= min_value:
                     bucket_indexes.append(index)
                 else:

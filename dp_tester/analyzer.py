@@ -7,7 +7,7 @@ import numpy.typing as npt
 def results_to_bucket_ids(
     results: OverallResults, bucket_id_func: BucketIdFromData
 ) -> t.Dict[str, t.List[int]]:
-    bucket_ids = {key: [] for key in results.keys()}
+    bucket_ids: t.Dict[str, t.List[int]] = {key: [] for key in results.keys()}
     for ds_name, runs in results.items():
         for query_results in runs:
             bucket_ids[ds_name].extend(bucket_id_func(query_results))
