@@ -1,9 +1,11 @@
 from pyqrlew.wrappers import Dataset, Relation
+import typing as t
 
 
 class PyqrlewTableRenamer:
-    def __init__(self, pyqrlew_dataset: Dataset):
+    def __init__(self, pyqrlew_dataset: Dataset, tables: t.Sequence[str]):
         self.dataset = pyqrlew_dataset
+        self.tables = tables
 
     def query_with_schema(self, query: str, schema_name: str) -> str:
         """It composes the query to add the schema to tables names."""
@@ -12,21 +14,15 @@ class PyqrlewTableRenamer:
             [
                 ((path[0], schema_name, path[-1]), rel.to_query())
                 for (path, rel) in self.dataset.relations()
-                if "users" in path or "transactions" in path
+                if path[-1] in self.tables
             ]
         )
-
         composing_relations = [
             (
-                ("users",),
-                Relation.from_query(f'SELECT * FROM "{schema_name}"."users"', new_ds),
-            ),
-            (
-                ("transactions",),
-                Relation.from_query(
-                    f'SELECT * FROM "{schema_name}"."transactions"', new_ds
-                ),
-            ),
+                (table,),
+                Relation.from_query(f'SELECT * FROM "{schema_name}"."{table}"', new_ds),
+            )
+            for table in self.tables
         ]
         dp_relation = Relation.from_query(query, self.dataset)
         composed = dp_relation.compose(composing_relations)

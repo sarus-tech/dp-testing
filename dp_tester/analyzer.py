@@ -1,16 +1,17 @@
-from dp_tester.typing import BucketIdFromDataPoint, PartitionedResults
+from dp_tester.typing import BucketIdFromData, OverallResults
 import numpy as np
 import typing as t
 import numpy.typing as npt
 
 
-def partition_results_to_bucket_ids(
-    results: PartitionedResults, bucket_id_func: BucketIdFromDataPoint
+def results_to_bucket_ids(
+    results: OverallResults, bucket_id_func: BucketIdFromData
 ) -> t.Dict[str, t.List[int]]:
-    bucket_ids = {}
-    for partition_key, partition_values in results.items():
-        bucket_idx = [bucket_id_func(value) for value in partition_values]
-        bucket_ids[partition_key] = bucket_idx
+    bucket_ids = {key: [] for key in results.keys()}
+    for ds_name, runs in results.items():
+        for query_results in runs:
+            bucket_ids[ds_name].extend(bucket_id_func(query_results))
+
     return bucket_ids
 
 
@@ -45,7 +46,7 @@ def empirical_epsilon(
     csm_c1 = np.cumsum(np.array(counts_d_1[sorting_index], dtype="float"))
     csm_c1[np.where(csm_c1 < counts_threshold)] = np.nan
 
-    false_positive = c_minus_cumsum_c0 / C  # equivalent to (1-cumsum(c0)/C)
+    false_positive = c_minus_cumsum_c0 / C  # equivalent to 1-cumsum(c0)/C
     false_negative = csm_c1 / C
 
     with np.errstate(divide="ignore", invalid="ignore"):

@@ -1,9 +1,22 @@
 from dp_tester.typing import (
     OverallResults,
-    PartitionedResults,
 )
 import numpy as np
 import typing as t
+import datetime
+
+QuantityOverGroupsGroupType = t.Union[
+    int,
+    float,
+    str,
+    datetime.date,
+    datetime.time,
+    datetime.datetime,
+    datetime.timedelta,
+]
+QuantityOverGroupsQuantityType = t.List[t.Union[int, float]]
+Row = t.Tuple[QuantityOverGroupsGroupType, QuantityOverGroupsQuantityType]
+QueryResults = t.Sequence[Row]
 
 
 class QuantityOverGroups:
@@ -17,51 +30,54 @@ class QuantityOverGroups:
     grouping by store_id.
     """
 
-    def __init__(self, groups=t.List[t.Any]):
+    def __init__(self, groups=t.List[QuantityOverGroupsGroupType]):
         self.groups = groups
-        self.buckets: t.List[t.Union[t.Tuple[float, float], None]]
+        self.buckets: t.List[
+            t.Union[t.Tuple[QuantityOverGroupsGroupType, t.Tuple[float, float]]]
+        ]
 
-    def partition_results(self, results: OverallResults) -> PartitionedResults:
-        res: PartitionedResults = {}
-
-        for ds_name, runs in results.items():
-            runs_res: PartitionedResults = {group: [] for group in self.groups}
-            # TODO: improve the readability
-            for run_results in runs:
-                res_as_dict = dict(run_results)
-
-                for group in self.groups:
-                    runs_res[group].append(res_as_dict.get(group, None))
-
-            for group, partition_results in runs_res.items():
-                res[f"{ds_name}-{group}"] = partition_results
-        return res
-
-
-    def generate_buckets(self, partitioned_results: PartitionedResults, nbuckets: int):
-        """Generate bins by concatenating all values from all the partitioned results and
-        use numpy.histogram to generate the bin edges.
+    def generate_buckets(self, results: OverallResults, n_float_buckets: int):
+        """It generates len(self.groups) * n_float_buckets buckets + 1:
+        Each bucket is related to a specific (group, (x_min, x_max) )
+        the + 1 is needed to indicate that there are no results.
         """
-        X = []
-        for _, res in partitioned_results.items():
-            X.append(res)
-        X = np.concatenate(np.array(X, dtype="float"))
+        X: t.List[t.List[float]] = []
+        for _, res in results.items():
+            for query_res in res:
+                quantity = [float(r[-1]) for r in query_res]
+                X.append(quantity)
+        X = np.concatenate(X, dtype="float")
         _, bin_edges = np.histogram(
-            X, bins=nbuckets, range=(np.nanmin(X), np.nanmax(X) + 1)
+            X, bins=n_float_buckets, range=(np.min(X), np.max(X) + 1)
         )
-        self.buckets = list(zip(bin_edges[:-1], bin_edges[1:])) + [None]
+        float_buckets = list(zip(bin_edges[:-1], bin_edges[1:]))
+        groups = [group for group in self.groups for _ in range(len(float_buckets))]
+        self.buckets = list(zip(groups, float_buckets * len(self.groups))) + [None]
 
-    def bucket_id(self, data_point: t.Union[float, None]) -> int:
+    def bucket_id(self, query_results: QueryResults) -> t.List[int]:
         """Function used by `partition_results_to_bucket_ids` for getting
-        bucket ids from a given data point."""
-        
+        bucket index from query results."""
+
         assert self.buckets is not None, "Buckets are not defined"
-        
-        if data_point is None:
-            return len(self.buckets) - 1
-        for i, bucket_value in enumerate(self.buckets[:-1]):
-            assert bucket_value is not None
-            (min_value, max_value) = bucket_value
-            if max_value > data_point >= min_value:
-                return i
-        raise ValueError("Couldn't allocate value to a bucket")
+        no_group_present_idx = len(self.buckets) - 1
+
+        if len(query_results) == 0:
+            return [no_group_present_idx]
+
+        query_results_as_dict = dict(query_results)
+        groups_in_result = query_results_as_dict.keys()
+        bucket_indexes = []
+
+        for index, bucket in enumerate(self.buckets[:-1]):
+            group_id, (min_value, max_value) = bucket
+            if group_id not in groups_in_result:
+                bucket_indexes.append(no_group_present_idx)
+            else:
+                quantity = query_results_as_dict.get(group_id)
+                if max_value > quantity >= min_value:
+                    bucket_indexes.append(index)
+                else:
+                    bucket_indexes.append(no_group_present_idx)
+
+        bucket_indexes.append(no_group_present_idx)
+        return bucket_indexes

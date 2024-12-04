@@ -1,6 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from sqlalchemy import create_engine, text
-from dp_tester.generate_datasets import USER, PASSWORD, HOST, PORT
+from dp_tester.constants import USER, PASSWORD, HOST, PORT
 from dp_tester.typing import QueryResults
 import typing as t
 

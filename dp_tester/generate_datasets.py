@@ -8,21 +8,15 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.schema import CreateSchema
 from sqlalchemy.future import select
 
+from dp_tester.constants import D_1, USER, PASSWORD, HOST, PORT
+
 # For reproducibility
 np.random.seed(42)
-
-PORT: int = 5433
-USER: str = "postgres"
-HOST: str = "localhost"
-PASSWORD: str = "pyqrlew-db"
 
 N_USERS = 100
 N_TRANSACTIONS = 10000
 N_STORES = 200
 N_OTHER_GROUPS = 10
-
-D_0 = "d_0"
-D_1 = "d_1"
 
 
 def db_engine():

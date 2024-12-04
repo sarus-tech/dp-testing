@@ -1,9 +1,15 @@
-from dp_tester.typing import OverallResults, DPRewriter, QueryExecutor, TableRenamer
+from dp_tester.typing import (
+    QueryResults,
+    OverallResults,
+    DPRewriter,
+    QueryExecutor,
+    TableRenamer,
+)
 from tqdm import tqdm
 import typing as t
 
 
-def generate_dp_results(
+def dp_results_from_sql_query(
     non_dp_query: str,
     epsilon: float,
     delta: float,
@@ -21,19 +27,15 @@ def generate_dp_results(
     dp_query = dp_rewriter.rewrite_with_differential_privacy(
         non_dp_query, epsilon, delta
     )
-    results: OverallResults = {}
+    results: t.Dict[str, t.List[QueryResults]] = {}
     results = {adj: [] for adj in adjacent_ds}
     results[d_0] = []
 
-    for _ in tqdm(range(runs)):
-        queries = []
-        queries.append((d_0, dp_query))
-        for adj_ds_name in adjacent_ds:
-            adj_query = table_renamer.query_with_schema(dp_query, adj_ds_name)
-            queries.append((adj_ds_name, adj_query))
-
-        res = query_executor.run_queries(queries)
-        for schema_name, query_res in res.items():
-            results[schema_name].append(query_res)
-
+    for adj_ds_name in adjacent_ds:
+        adj_query = table_renamer.query_with_schema(dp_query, adj_ds_name)
+        for _ in tqdm(range(runs)):
+            queries = [(d_0, dp_query), (adj_ds_name, adj_query)]
+            res = query_executor.run_queries(queries)
+            for schema_name, query_res in res.items():
+                results[schema_name].append(query_res)
     return results

@@ -1,15 +1,15 @@
-from dp_tester.generate_dp_results import generate_dp_results
+from dp_tester.results_collector import dp_results_from_sql_query
 from dp_tester.query_executors import SqlAlchemyQueryExecutor
 from dp_tester.dp_rewriters import PyqrlewDpRewriter
 from dp_tester.table_renamers import PyqrlewTableRenamer
-from dp_tester.generate_datasets import D_0
+from dp_tester.constants import D_0, D_1
 
 from dp_tester.generate_datasets import N_STORES
 from dp_tester.partitioners import QuantityOverGroups
-from dp_tester.analyzer import partition_results_to_bucket_ids, counts_from_indexes
+from dp_tester.analyzer import results_to_bucket_ids, counts_from_indexes
 from dp_tester.analyzer import empirical_epsilon
 
-from dp_tester.generate_datasets import generate_D_0_dataset, generate_adj_datasets, D_1
+from dp_tester.generate_datasets import generate_D_0_dataset, generate_adj_datasets
 import json
 
 EPSILON = 1.0
@@ -27,9 +27,10 @@ generate_adj_datasets(D_1, user_id=0)
 print("Generating DP results")
 query_executor = SqlAlchemyQueryExecutor()
 dp_rewriter = PyqrlewDpRewriter(engine=query_executor.engine)
-table_renamer = PyqrlewTableRenamer(dp_rewriter.dataset)
+tables = ["users", "transactions"]
+table_renamer = PyqrlewTableRenamer(dp_rewriter.dataset, tables)
 
-results = generate_dp_results(
+results = dp_results_from_sql_query(
     non_dp_query=QUERY,
     epsilon=EPSILON,
     delta=DELTA,
@@ -47,29 +48,17 @@ with open("results.json") as infile:
     results = json.load(infile)
 
 print("Partitioning results and associating values to each bucket id")
-partitioner = QuantityOverGroups(groups=range(N_STORES))
-partitioned_results = partitioner.partition_results(results)
-partitioner.generate_buckets(partitioned_results, nbuckets=NBINS)
-bucket_ids = partition_results_to_bucket_ids(partitioned_results, partitioner.bucket_id)
+partitioner = QuantityOverGroups(groups=list(range(N_STORES)))
+partitioner.generate_buckets(results, n_float_buckets=NBINS)
+bucket_ids = results_to_bucket_ids(results, partitioner.bucket_id)
 
-print("Generating Counts")
-d_0_d_1_counts = {}
-for group in partitioner.groups:
-    buckets_ids_d_0 = bucket_ids[f"{D_0}-{group}"]
-    buckets_ids_d_1 = bucket_ids[f"{D_1}-{group}"]
-    counts_d_0 = counts_from_indexes(buckets_ids_d_0, NBINS)
-    counts_d_1 = counts_from_indexes(buckets_ids_d_1, NBINS)
-    d_0_d_1_counts[f"{D_0}-{D_1}-{group}"] = (counts_d_0, counts_d_1)
+counts_d_0 = counts_from_indexes(bucket_ids[D_0], len(partitioner.buckets))
+counts_d_1 = counts_from_indexes(bucket_ids[D_1], len(partitioner.buckets))
 
-print("Computing empirical epsilons")
-empirical_epsilons = {}
-for name, (count_d_0, counts_d_1) in d_0_d_1_counts.items():
-    empirical_epsilons[name] = empirical_epsilon(
-        count_d_0, counts_d_1, delta=DELTA, counts_threshold=COUNT_THRESHOLD
-    )
-empirical_epsilons_values = list(empirical_epsilons.values())
-max_eps = max(empirical_epsilons_values)
+empirical_eps = empirical_epsilon(
+    counts_d_0, counts_d_1, delta=DELTA, counts_threshold=COUNT_THRESHOLD
+)
 
 print(f"Epsilon used during the experiment: {EPSILON}")
-print(f"Max empirical epsilon found: {max_eps}")
-print(f"Did the test passed? {max_eps < EPSILON}")
+print(f"Max empirical epsilon found: {empirical_eps}")
+print(f"Did the test passed? {empirical_eps < EPSILON}")
