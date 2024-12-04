@@ -33,6 +33,7 @@ def create_ds_from_metadata(schema: t.Optional[str] = None):
         metadata,
         Column("id", types.Integer, primary_key=True),
         Column("income", types.Float, nullable=False),
+        Column("income_class", types.String, nullable=False),
     )
     transactions = Table(
         "transactions",
@@ -49,11 +50,11 @@ def create_ds_from_metadata(schema: t.Optional[str] = None):
         Column("spent", types.Float, nullable=False),
         # Column("datetime", types.DateTime(), nullable=False),
     )
-    user_table = "users" if schema is None else f'{schema}."users"'
-    transaction_table = "transactions" if schema is None else f'{schema}."transactions"'
+    user_table = "users" if schema is None else f'"{schema}"."users"'
+    transaction_table = "transactions" if schema is None else f'"{schema}"."transactions"'
 
     with engine.begin() as conn:
-        conn.execute(
+        _ = conn.execute(
             text(f"DROP TABLE IF EXISTS {user_table}, {transaction_table} CASCADE")
         )
 
@@ -87,8 +88,8 @@ def create_users_and_transactions_dfs():
 
     # Income normally distributed
     user_income = np.random.normal(loc=40000, scale=10000, size=100)
-
-    users_df = pd.DataFrame({"id": user_ids, "income": user_income})
+    income_class = ['low' if income < 35000 else 'middle' if 35000 < income < 50000 else 'high' for income in user_income]
+    users_df = pd.DataFrame({"id": user_ids, "income": user_income, 'income_class': income_class})
     transactions_df = create_transactions(
         user_ids, n_transactions=N_TRANSACTIONS, max_contributions=500
     )

@@ -15,7 +15,7 @@ import json
 EPSILON = 1.0
 DELTA = 1e-4
 COUNT_THRESHOLD = 5
-RUNS = 100
+RUNS = 1000
 NBINS = 20
 QUERY = "SELECT store_id, SUM(spent) FROM transactions GROUP BY store_id"
 
