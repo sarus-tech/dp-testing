@@ -2,17 +2,14 @@ import typing as t
 from collections.abc import Callable
 import datetime
 
-NonEmptyDataPoint = t.Union[
-    int, float, str, datetime.date, datetime.time, datetime.datetime, datetime.timedelta
-]
-DataPoint = t.Optional[NonEmptyDataPoint]
+
+DataPoint = t.TypeVar("DataPoint")
 Row = t.Tuple[DataPoint, ...]
 QueryResults = t.Sequence[Row]
 OverallResults = t.Mapping[str, t.Sequence[QueryResults]]
 
-T = t.TypeVar("T")
-BucketIdFromData = Callable[[T], t.Sequence[int]]
-PartitionedResults = t.Mapping[str, t.Sequence[T]]
+Partition = Callable[[QueryResults], t.Union[int, None]]
+PartitionVector = t.Sequence[Partition]
 
 
 class DPRewriter(t.Protocol):
@@ -55,12 +52,8 @@ class TableRenamer(t.Protocol):
 class Partitioner(t.Protocol):
     """A protocol that defines methods for partitioning results and assigning data points to buckets."""
 
-    def generate_buckets(
-        self, partitioned_results: PartitionedResults, nbuckets: int
-    ) -> None: ...
+    def partition_vector(self, query_results: QueryResults) -> PartitionVector: ...
 
-    def bucket_id(self, query_results: QueryResults) -> t.List[int]: ...
-
-    """Function used to associate any datapoint to a single bucket id.
-    It returns the index of the bucket associated with such datapoint
+    """It returns a list of partition function used to map a QueryResults to a single
+    bucket id.
     """
