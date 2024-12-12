@@ -27,7 +27,9 @@ generate_adj_datasets(D_1, user_id=0)
 
 print("Generating DP results")
 query_executor = SqlAlchemyQueryExecutor()
-dp_rewriter = PyqrlewDpRewriter(engine=query_executor.engine, max_privacy_unit_groups=Cu)
+dp_rewriter = PyqrlewDpRewriter(
+    engine=query_executor.engine, max_privacy_unit_groups=Cu
+)
 tables = ["users", "transactions"]
 table_renamer = PyqrlewTableRenamer(dp_rewriter.dataset, tables)
 
@@ -58,10 +60,18 @@ bucket_ids = results_to_bucket_ids(results, partitioner.partition_vector())
 
 empirical_eps_per_group = {}
 for i, partition_bucket_ids in enumerate(bucket_ids):
-    counts_d_0 = counts_from_indexes(partition_bucket_ids[D_0], len(partitioner.buckets))
-    counts_d_1 = counts_from_indexes(partition_bucket_ids[D_1], len(partitioner.buckets))
+    counts_d_0 = counts_from_indexes(
+        partition_bucket_ids[D_0], len(partitioner.buckets)
+    )
+    counts_d_1 = counts_from_indexes(
+        partition_bucket_ids[D_1], len(partitioner.buckets)
+    )
     empirical_eps_per_group[i] = empirical_epsilon(
-        counts_d_0, counts_d_1, delta=DELTA, counts_threshold=COUNT_THRESHOLD, plot=False
+        counts_d_0,
+        counts_d_1,
+        delta=DELTA,
+        counts_threshold=COUNT_THRESHOLD,
+        plot=False,
     )
 all_eps = list(empirical_eps_per_group.values())
 max_eps = max(all_eps)

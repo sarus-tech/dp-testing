@@ -9,7 +9,7 @@ class PyqrlewDpRewriter:
         engine: Engine,
         dataset_name: str = "retail",
         schema: t.Optional[str] = None,
-        max_privacy_unit_groups: int = 5
+        max_privacy_unit_groups: int = 5,
     ):
         tmp_dataset = Dataset.from_database(dataset_name, engine, schema, ranges=True)
         self.dataset = tmp_dataset.users.id.with_unique_constraint()  # type: ignore
@@ -35,13 +35,14 @@ class PyqrlewDpRewriter:
             synthetic_data=None,
             privacy_unit=privacy_unit,
             epsilon_delta=epsilon_delta,
-            max_privacy_unit_groups=self.max_privacy_unit_groups
+            max_privacy_unit_groups=self.max_privacy_unit_groups,
         )
-    
+
     # Utils used for debugging
 
     def plot_relation(self, query: str, epsilon: float, delta: float):
         from pyqrlew import utils
+
         rel = Relation.from_query(query, self.dataset)
         privacy_unit = [
             ("users", [], "id"),
@@ -53,14 +54,12 @@ class PyqrlewDpRewriter:
             synthetic_data=None,
             privacy_unit=privacy_unit,
             epsilon_delta=epsilon_delta,
-            max_privacy_unit_groups=self.max_privacy_unit_groups
+            max_privacy_unit_groups=self.max_privacy_unit_groups,
         )
         dp_rel = dp_rel_event.relation()
         dp_query = dp_rel.to_query()
         print(dp_query)
         utils.display_graph(dp_rel.dot())
-
-        
 
     def rewrite_with_differential_privacy(
         self, query: str, epsilon: float, delta: float

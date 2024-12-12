@@ -1,6 +1,5 @@
 import typing as t
 from collections.abc import Callable
-import datetime
 
 
 DataPoint = t.TypeVar("DataPoint")
