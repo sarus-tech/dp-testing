@@ -23,7 +23,7 @@ datasets = [
 ]
 
 pyqrlew_dp_rewriter = [
-	"pyqrlew >= 0.9.25",
+	"pyqrlew >= 0.9.27",
 ]
 
 dev = [
