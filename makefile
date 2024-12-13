@@ -1,5 +1,5 @@
 lock:
-	uv pip compile pyproject.toml --extra pyqrlew_dp_rewriter --extra datasets --extra dev -o requirements.txt && uv cache clean
+	uv pip compile pyproject.toml --extra dev -o requirements.txt && uv cache clean
 
 venv:
 	uv venv
