@@ -17,12 +17,13 @@ class QuantityOverGroups:
         datetime.time,
         datetime.datetime,
         datetime.timedelta,
+        None
     ]
-    QuantityOverGroupsQuantityType = t.Union[int, float]
+    QuantityOverGroupsQuantityType = t.Union[int, float, None]
 
     def __init__(self, groups=t.List[QuantityOverGroupsGroupType]):
         self.groups = groups
-        self.buckets: t.List[t.Optional[t.Tuple[float, float]]]
+        self.buckets: t.List[t.Tuple[float, float]]
 
     def partition(self, group: QuantityOverGroupsGroupType) -> Partition:
         def partition_function(query_results: QueryResults) -> t.Union[int, None]:
