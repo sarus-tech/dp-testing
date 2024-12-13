@@ -13,19 +13,12 @@ requires-python = ">=3.9"
 dependencies = [
     "numpy >= 1.24",
     "tqdm",
+    "SQLAlchemy ~= 2.0",
+    "pandas >= 1.4"
+    "pyqrlew >= 0.9.27",
 ]
 
 [project.optional-dependencies]
-
-datasets = [
-    "SQLAlchemy ~= 2.0",
-    "pandas >= 1.4"
-]
-
-pyqrlew_dp_rewriter = [
-	"pyqrlew >= 0.9.27",
-]
-
 dev = [
     "mypy ~= 1.0",
     "ruff",
