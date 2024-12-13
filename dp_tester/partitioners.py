@@ -5,11 +5,8 @@ import datetime
 
 
 class QuantityOverGroups:
-    """Experiment to partition results from queries like.
+    """Object to partition results from queries like.
     SELECT <some_group>, AGG(<some_quantity>) FROM transactions [JOIN users] GROUP BY some_group
-
-    The output space S is partitioned as all possible pairs group_id and quantity interval
-    plus the empty set.
     """
 
     QuantityOverGroupsGroupType = t.Union[
@@ -42,7 +39,7 @@ class QuantityOverGroups:
                     if max_value > quantity >= min_value:
                         return index
                 raise ValueError(
-                    f"I Couldn't associated quantity {quantity} to any bucket id."
+                    f"I Could not associate quantity {quantity} to any bucket id."
                     " Please make sure buckets are right."
                 )
 
