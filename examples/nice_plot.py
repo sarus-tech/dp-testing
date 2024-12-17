@@ -27,12 +27,12 @@ fig, axs = plt.subplots(3, 1, figsize=(9, 11), sharex=True)
 
 ### Plot 1: f_0, f_1, and r on the same plot with right axis for r ###
 ax1 = axs[0]
-ax1.plot(x, f_0, label=r"$P_0$", color="blue")
-ax1.plot(x, f_1, label=r"$P_1$", color="red")
+ax1.plot(x, f_0, label=r"$\rho(r | D_0)$", color="blue")
+ax1.plot(x, f_1, label=r"$\rho(r | D_1)$", color="red")
 
 # Create a twin y-axis to plot r
 ax1_r = ax1.twinx()
-ax1_r.plot(x, r, "g--", label=r"$P_0 / P_1$")
+ax1_r.plot(x, r, "g--", label=r"$\rho(r | D_0)/\rho(r | D_1)$")
 
 # Add tau as vertical dashed line
 ax1.axvline(x=tau, color="k", linestyle="--")
@@ -116,3 +116,5 @@ fig.text(0.75, 0.96, r"$H_1$", va="center", fontsize=18)
 # Adjust layout and display the plot
 plt.tight_layout(rect=[0.05, 0.05, 0.95, 0.95], h_pad=0)
 plt.show()
+
+fig.savefig('figure_fp_fn.png')
